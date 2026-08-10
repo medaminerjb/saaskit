@@ -28,6 +28,8 @@ type RouterConfig struct {
 	SocialLogin http.Handler
 	// TenantService is the tenant management service.
 	TenantService *tenantservice.TenantService
+	// APIKeyService is the API key management service.
+	APIKeyService *service.APIKeyService
 }
 
 // NewRouter creates the main HTTP router with all middleware and routes.
@@ -38,6 +40,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	logger := cfg.Logger
 
 	// ─── Global middleware ────────────────────────────
+	r.Use(corsMiddleware)
 	r.Use(chimiddleware.RequestID)
 	r.Use(clientInfoMiddleware)
 	r.Use(SecurityHeadersMiddleware)
@@ -49,7 +52,6 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Use(slogMiddleware(logger))
 	r.Use(chimiddleware.Recoverer)
 	r.Use(chimiddleware.Timeout(30 * time.Second))
-	r.Use(corsMiddleware)
 
 	// ─── Health endpoints ────────────────────────────
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
@@ -84,6 +86,14 @@ func NewRouter(cfg RouterConfig) http.Handler {
 			}
 		})
 	})
+
+	if cfg.APIKeyService != nil {
+		apiKeyHandler := NewAPIKeyHandler(cfg.APIKeyService, logger)
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.Handler)
+			apiKeyHandler.RegisterRoutes(r)
+		})
+	}
 
 	// ─── OIDC Provider ───────────────────────────────
 	if cfg.OIDCProvider != nil {

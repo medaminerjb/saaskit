@@ -141,7 +141,7 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("X-XSS-Protection", "0")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; object-src 'none';")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; connect-src *; frame-ancestors 'none'; object-src 'none';")
 
 		// If HTTPS, set Strict-Transport-Security
 		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
