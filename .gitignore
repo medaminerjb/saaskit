@@ -39,9 +39,11 @@ Thumbs.db
 keys/*.pem
 keys/*.pub
 keys/*.key
+*.key
+*.pub
+*.sig
 !keys/.gitkeep
 !keys/README.md
-
 # Docker volumes
 pgdata/
 

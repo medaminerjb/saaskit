@@ -12,14 +12,110 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 )
 
 // KeyPair holds a private/public key pair for JWT signing.
 type KeyPair struct {
 	PrivateKey crypto.Signer
 	PublicKey  crypto.PublicKey
-	Algorithm string // RS256, ES256, EdDSA
-	KeyID     string // kid for JWKS
+	Algorithm  string // RS256, ES256, EdDSA
+	KeyID      string // kid for JWKS
+}
+
+// KeyRing manages active signing keys and passive verification keys for JWKS key rotation.
+type KeyRing struct {
+	mu              sync.RWMutex
+	ActiveKey       *KeyPair
+	VerificationMap map[string]*KeyPair
+}
+
+// NewKeyRing initializes a KeyRing with an active key and optional retired keys.
+func NewKeyRing(active *KeyPair, retired ...*KeyPair) *KeyRing {
+	kr := &KeyRing{
+		ActiveKey:       active,
+		VerificationMap: make(map[string]*KeyPair),
+	}
+	if active != nil {
+		kr.VerificationMap[active.KeyID] = active
+	}
+	for _, k := range retired {
+		if k != nil {
+			kr.VerificationMap[k.KeyID] = k
+		}
+	}
+	return kr
+}
+
+// GetActive returns the current active signing key.
+func (kr *KeyRing) GetActive() *KeyPair {
+	kr.mu.RLock()
+	defer kr.mu.RUnlock()
+	return kr.ActiveKey
+}
+
+// GetKey returns a key by KeyID (kid) for token verification.
+func (kr *KeyRing) GetKey(kid string) (*KeyPair, bool) {
+	kr.mu.RLock()
+	defer kr.mu.RUnlock()
+	kp, ok := kr.VerificationMap[kid]
+	return kp, ok
+}
+
+// AllKeys returns all keypairs (active and retired) currently in the key ring.
+func (kr *KeyRing) AllKeys() []*KeyPair {
+	kr.mu.RLock()
+	defer kr.mu.RUnlock()
+	keys := make([]*KeyPair, 0, len(kr.VerificationMap))
+	for _, k := range kr.VerificationMap {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// Rotate transitions a new KeyPair to become the active key, retiring the previous active key.
+func (kr *KeyRing) Rotate(newKey *KeyPair) {
+	kr.mu.Lock()
+	defer kr.mu.Unlock()
+
+	if kr.ActiveKey != nil {
+		kr.VerificationMap[kr.ActiveKey.KeyID] = kr.ActiveKey
+	}
+	kr.ActiveKey = newKey
+	if newKey != nil {
+		kr.VerificationMap[newKey.KeyID] = newKey
+	}
+}
+
+// LoadOrGenerateKeyRing loads active and retired keys from disk into a KeyRing.
+func LoadOrGenerateKeyRing(keyPath, algorithm string, isDev bool) (*KeyRing, error) {
+	active, err := LoadOrGenerateKeyPair(keyPath, algorithm, isDev)
+	if err != nil {
+		return nil, err
+	}
+
+	kr := NewKeyRing(active)
+
+	// Load retired keys from keyPath/retired if present
+	retiredDir := filepath.Join(keyPath, "retired")
+	entries, err := os.ReadDir(retiredDir)
+	if err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".pem") {
+				continue
+			}
+			kid := strings.TrimSuffix(entry.Name(), ".pem")
+			privPath := filepath.Join(retiredDir, entry.Name())
+			pubPath := filepath.Join(retiredDir, kid+".pub")
+			kp, err := loadKeyPairWithKID(privPath, pubPath, algorithm, kid)
+			if err == nil {
+				kr.VerificationMap[kid] = kp
+			}
+		}
+	}
+
+	return kr, nil
 }
 
 // LoadOrGenerateKeyPair loads signing keys from disk.
@@ -49,6 +145,10 @@ func LoadOrGenerateKeyPair(keyPath, algorithm string, isDev bool) (*KeyPair, err
 }
 
 func loadKeyPair(privPath, pubPath, algorithm string) (*KeyPair, error) {
+	return loadKeyPairWithKID(privPath, pubPath, algorithm, "active")
+}
+
+func loadKeyPairWithKID(privPath, pubPath, algorithm, kid string) (*KeyPair, error) {
 	privPEM, err := os.ReadFile(privPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading private key: %w", err)
@@ -84,7 +184,7 @@ func loadKeyPair(privPath, pubPath, algorithm string) (*KeyPair, error) {
 		PrivateKey: signer,
 		PublicKey:  signer.Public(),
 		Algorithm:  algorithm,
-		KeyID:      "active",
+		KeyID:      kid,
 	}, nil
 }
 

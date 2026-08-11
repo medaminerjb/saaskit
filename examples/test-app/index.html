@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaaSKit Live Integration Test Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo">⚡</div>
+        <div>
+          <h1>SaaSKit Tester</h1>
+          <span class="subtitle">Real-time Identity & SaaS Infrastructure Verification</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="server-config">
+          <label for="serverUrl">API Target:</label>
+          <input type="text" id="serverUrl" value="http://localhost:8080" />
+        </div>
+        <button id="btnHealth" class="btn btn-secondary btn-sm">Check Server Status</button>
+        <div id="statusBadge" class="status-badge offline">
+          <span class="dot"></span>
+          <span id="statusText">Disconnected</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Context Info Bar -->
+    <div class="context-bar">
+      <div class="context-item">
+        <span class="label">Authenticated User:</span>
+        <span id="currentUserEmail" class="value text-muted">Not Logged In</span>
+      </div>
+      <div class="context-item">
+        <span class="label">Access Token:</span>
+        <span id="tokenPreview" class="value token-preview text-muted">None</span>
+      </div>
+      <div class="context-item">
+        <span class="label">Active Tenant:</span>
+        <span id="activeTenantName" class="value text-muted">None</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="auth">🔐 Auth & Sessions</button>
+      <button class="tab-btn" data-tab="profile">👤 User Profile & Metadata</button>
+      <button class="tab-btn" data-tab="tenants">🏢 Multi-Tenancy / Orgs</button>
+      <button class="tab-btn" data-tab="apikeys">🔑 API Keys</button>
+      <button class="tab-btn" data-tab="oidc">🛡️ OIDC Provider</button>
+      <button class="tab-btn" data-tab="oidc-cert">🏆 OIDC Certification Suite</button>
+    </nav>
+
+    <!-- Main Content Panels -->
+    <main class="main-content">
+      <!-- TAB 1: AUTH -->
+      <section id="tab-auth" class="tab-pane active">
+        <div class="grid grid-2">
+          <!-- Register Card -->
+          <div class="card">
+            <h3>Register New User</h3>
+            <p class="card-desc">Create a new user account with email & password.</p>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" id="regEmail" value="demo@example.com" placeholder="user@domain.com">
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="regPassword" value="SecureP@ss123!" placeholder="Minimum 8 characters">
+            </div>
+            <button id="btnRegister" class="btn btn-primary">Register User</button>
+          </div>
+
+          <!-- Login Card -->
+          <div class="card">
+            <h3>Login Account</h3>
+            <p class="card-desc">Authenticate and receive Access & Refresh tokens.</p>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" id="loginEmail" value="demo@example.com">
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="loginPassword" value="SecureP@ss123!">
+            </div>
+            <div class="btn-group">
+              <button id="btnLogin" class="btn btn-success">Login</button>
+              <button id="btnRefresh" class="btn btn-secondary">Refresh Token</button>
+              <button id="btnLogout" class="btn btn-danger">Logout</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: PROFILE -->
+      <section id="tab-profile" class="tab-pane">
+        <div class="grid grid-2">
+          <!-- Me Info -->
+          <div class="card">
+            <h3>Current User Info (`GET /api/v1/users/me`)</h3>
+            <p class="card-desc">Fetch details for the active authenticated session.</p>
+            <div class="btn-group mb-4">
+              <button id="btnGetMe" class="btn btn-primary">Fetch /users/me</button>
+            </div>
+            <div class="form-group">
+              <label>Update Full Name</label>
+              <input type="text" id="profileName" placeholder="Enter new full name">
+            </div>
+            <button id="btnUpdateProfile" class="btn btn-secondary">Update Profile</button>
+          </div>
+
+          <!-- Metadata -->
+          <div class="card">
+            <h3>User Metadata (`/users/me/metadata`)</h3>
+            <p class="card-desc">Manage public & private JSONB custom attributes.</p>
+            <div class="form-group">
+              <label>Public Metadata (JSON)</label>
+              <textarea id="publicMeta" rows="4">{"theme": "dark", "locale": "en-US"}</textarea>
+            </div>
+            <div class="form-group">
+              <label>Private Metadata (JSON)</label>
+              <textarea id="privateMeta" rows="4">{"internal_tier": "pro", "features": ["beta"]}</textarea>
+            </div>
+            <div class="btn-group">
+              <button id="btnGetMeta" class="btn btn-secondary">Get Metadata</button>
+              <button id="btnUpdateMeta" class="btn btn-primary">Save Metadata</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: TENANTS -->
+      <section id="tab-tenants" class="tab-pane">
+        <div class="grid grid-2">
+          <!-- Create & List Tenants -->
+          <div class="card">
+            <h3>Organizations / Multi-Tenancy</h3>
+            <p class="card-desc">Create SaaS organizations and switch tenant context.</p>
+            <div class="form-group">
+              <label>Organization Name</label>
+              <input type="text" id="tenantName" value="Acme Corp" placeholder="e.g. Acme Corp">
+            </div>
+            <div class="form-group">
+              <label>Slug</label>
+              <input type="text" id="tenantSlug" value="acme-corp" placeholder="e.g. acme-corp">
+            </div>
+            <div class="btn-group mb-4">
+              <button id="btnCreateTenant" class="btn btn-primary">Create Organization</button>
+              <button id="btnListTenants" class="btn btn-secondary">List My Organizations</button>
+            </div>
+            <div class="form-group">
+              <label>Tenant List / Selector</label>
+              <select id="tenantSelect">
+                <option value="">(No tenant selected)</option>
+              </select>
+            </div>
+            <button id="btnSwitchTenant" class="btn btn-success">Switch Active Tenant Context</button>
+          </div>
+
+          <!-- Members & Invites -->
+          <div class="card">
+            <h3>Organization Members</h3>
+            <p class="card-desc">Manage tenant memberships and invite team members.</p>
+            <div class="form-group">
+              <label>Invite User Email</label>
+              <input type="email" id="inviteEmail" placeholder="teammate@example.com">
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <select id="inviteRole">
+                <option value="Admin">Admin</option>
+                <option value="Manager">Manager</option>
+                <option value="Member" selected>Member</option>
+                <option value="Viewer">Viewer</option>
+              </select>
+            </div>
+            <div class="btn-group">
+              <button id="btnInviteMember" class="btn btn-primary">Send Invitation</button>
+              <button id="btnListMembers" class="btn btn-secondary">Fetch Member List</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: API KEYS -->
+      <section id="tab-apikeys" class="tab-pane">
+        <div class="grid grid-2">
+          <!-- Generate API Key -->
+          <div class="card">
+            <h3>Generate Tenant API Key</h3>
+            <p class="card-desc">Create test or live API keys for backend integrations.</p>
+            <div class="form-group">
+              <label>Key Name</label>
+              <input type="text" id="apiKeyName" value="CI/CD Integration Key">
+            </div>
+            <div class="form-group">
+              <label>Key Type</label>
+              <select id="apiKeyType">
+                <option value="test" selected>sk_test (Test Key)</option>
+                <option value="live">sk_live (Live Key)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Scopes (comma-separated)</label>
+              <input type="text" id="apiKeyScopes" value="read,write,tenant:read">
+            </div>
+            <div class="btn-group mb-4">
+              <button id="btnCreateApiKey" class="btn btn-primary">Generate API Key</button>
+              <button id="btnListApiKeys" class="btn btn-secondary">List API Keys</button>
+            </div>
+          </div>
+
+          <!-- Test API Key Request -->
+          <div class="card">
+            <h3>API Key Auth Sandbox</h3>
+            <p class="card-desc">Test authorization using generated API Key in `X-API-Key` header.</p>
+            <div class="form-group">
+              <label>API Key Secret</label>
+              <input type="text" id="testApiKeySecret" placeholder="Paste generated sk_test_... or sk_live_... key">
+            </div>
+            <button id="btnTestApiKey" class="btn btn-success">Authenticate via API Key</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: OIDC -->
+      <section id="tab-oidc" class="tab-pane">
+        <div class="grid grid-2">
+          <!-- Discovery -->
+          <div class="card">
+            <h3>OIDC Discovery & JWKS</h3>
+            <p class="card-desc">Verify OpenID Connect provider configuration and public keys.</p>
+            <div class="btn-group">
+              <button id="btnOidcDiscovery" class="btn btn-primary">Fetch Discovery (`/.well-known/openid-configuration`)</button>
+              <button id="btnJwks" class="btn btn-secondary">Fetch JWKS (`/keys` or `/oidc/keys`)</button>
+            </div>
+          </div>
+
+          <!-- Auth Code Flow Simulator -->
+          <div class="card">
+            <h3>Authorization Code Flow Test</h3>
+            <p class="card-desc">Launch OIDC authorization flow endpoint in a new window.</p>
+            <div class="form-group">
+              <label>Client ID</label>
+              <input type="text" id="oidcClientId" value="demo-client-id">
+            </div>
+            <div class="form-group">
+              <label>Redirect URI</label>
+              <input type="text" id="oidcRedirectUri" value="http://localhost:3000/callback">
+            </div>
+            <button id="btnLaunchOidc" class="btn btn-success">Launch /oidc/authorize Endpoint</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: OIDC CERTIFICATION SUITE -->
+      <section id="tab-oidc-cert" class="tab-pane">
+        <!-- Overview & Score Card -->
+        <div class="card mb-4">
+          <div class="cert-header">
+            <div>
+              <h3>🏆 OpenID Connect Certification Test & Readiness Suite</h3>
+              <p class="card-desc">Automated compliance audit against OpenID Foundation (OIDF) Core 1.0 certification requirements.</p>
+            </div>
+            <div class="btn-group">
+              <button id="btnRunCertAudit" class="btn btn-success btn-lg">⚡ Run OIDC Compliance Audit</button>
+            </div>
+          </div>
+
+          <div class="cert-score-container">
+            <div class="score-box">
+              <span class="score-label">Certification Readiness Score</span>
+              <span id="certScoreVal" class="score-number">--%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div id="certProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+            </div>
+            <div class="score-stats">
+              <span class="stat-item passed"><strong id="certCountPass">0</strong> Passed</span>
+              <span class="stat-item warned"><strong id="certCountWarn">0</strong> Warnings</span>
+              <span class="stat-item failed"><strong id="certCountFail">0</strong> Failed</span>
+              <span class="stat-item total"><strong id="certCountTotal">0</strong> Total Checks</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Conformance Table -->
+        <div class="card mb-4">
+          <h3>Conformance Audit Test Results</h3>
+          <p class="card-desc">Detailed compliance breakdown per OpenID Connect specification clause.</p>
+          <div class="table-responsive">
+            <table class="cert-table">
+              <thead>
+                <tr>
+                  <th>Test ID</th>
+                  <th>Spec Clause & Feature</th>
+                  <th>Status</th>
+                  <th>Audit Note & Verification Details</th>
+                </tr>
+              </thead>
+              <tbody id="certTableBody">
+                <tr>
+                  <td colspan="4" class="text-center text-muted">Click "Run OIDC Compliance Audit" above to start automated conformance checks.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- OIDF External Test Suite Guide -->
+        <div class="card">
+          <h3>🌐 Official OpenID Foundation (OIDF) Conformance Suite Instructions</h3>
+          <p class="card-desc">How to submit SaaSKit for official OpenID Connect Certification.</p>
+          <div class="oidf-guide">
+            <ol>
+              <li><strong>Hosted Test Suite</strong>: Visit <a href="https://www.certification.openid.net/" target="_blank" rel="noopener">www.certification.openid.net</a> and sign in with your OpenID credentials.</li>
+              <li><strong>Local Docker Conformance Runner</strong>: Alternatively, run the official OIDF test runner locally:
+                <pre>docker run -p 8443:8443 -docker-registry.openid.net/oidf/conformance-suite:latest</pre>
+              </li>
+              <li><strong>Configuration Profile</strong>: Select <code>Basic OP</code> or <code>Configurable OP</code> test profile. Set Discovery URL to <code>http://localhost:8080/.well-known/openid-configuration</code>.</li>
+              <li><strong>Key Algorithms</strong>: SaaSKit currently uses asymmetric signing (<strong>RS256</strong> default, supporting <strong>ES256</strong> &amp; <strong>EdDSA</strong>).</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Response & Log Console -->
+    <footer class="console-section">
+      <div class="console-header">
+        <div class="console-title">
+          <span>⚡ Live HTTP Console</span>
+          <span id="lastStatusCode" class="badge-status">Ready</span>
+          <span id="lastLatency" class="badge-latency">0ms</span>
+        </div>
+        <button id="btnClearConsole" class="btn btn-sm btn-outline">Clear Logs</button>
+      </div>
+      <div class="console-body">
+        <pre id="consoleOutput">// Interactive API responses and payload logs will appear here...</pre>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
