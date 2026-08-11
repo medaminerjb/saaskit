@@ -14,12 +14,14 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/medaminerjb/saas-kit/internal/platform/crypto/kms"
 	"golang.org/x/crypto/hkdf"
 )
 
-// Envelope provides AES-256-GCM envelope encryption using a master key.
+// Envelope provides AES-256-GCM envelope encryption using a master key or KMS provider.
 type Envelope struct {
-	masterKey []byte
+	kmsProvider kms.KMS
+	masterKey   []byte
 }
 
 // NewEnvelope creates a new Envelope encryptor from a hex-encoded master key.
@@ -32,7 +34,35 @@ func NewEnvelope(masterKeyHex string) (*Envelope, error) {
 	if len(key) != 32 {
 		return nil, fmt.Errorf("master key must be 32 bytes (64 hex chars), got %d bytes", len(key))
 	}
-	return &Envelope{masterKey: key}, nil
+	localKMS, err := kms.NewLocalKMS(key)
+	if err != nil {
+		return nil, fmt.Errorf("initializing local kms: %w", err)
+	}
+	return &Envelope{
+		kmsProvider: localKMS,
+		masterKey:   key,
+	}, nil
+}
+
+// NewEnvelopeWithKMS creates a new Envelope encryptor backed by a KMS provider.
+func NewEnvelopeWithKMS(kmsProvider kms.KMS, masterKey []byte) (*Envelope, error) {
+	if kmsProvider == nil {
+		return nil, fmt.Errorf("kms provider cannot be nil")
+	}
+	if len(masterKey) != 32 {
+		return nil, fmt.Errorf("master key must be 32 bytes, got %d", len(masterKey))
+	}
+	keyCopy := make([]byte, 32)
+	copy(keyCopy, masterKey)
+	return &Envelope{
+		kmsProvider: kmsProvider,
+		masterKey:   keyCopy,
+	}, nil
+}
+
+// KMSProvider returns the KMS provider instance associated with the envelope.
+func (e *Envelope) KMSProvider() kms.KMS {
+	return e.kmsProvider
 }
 
 // Encrypt encrypts plaintext using AES-256-GCM with a derived key.

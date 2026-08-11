@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/medaminerjb/saas-kit/internal/identity/service"
+	platformmiddleware "github.com/medaminerjb/saas-kit/internal/platform/middleware"
 )
 
 // AuthMiddleware validates JWT access tokens and injects claims into the request context.
@@ -136,18 +137,5 @@ func (rl *RateLimiter) Limit(next http.Handler) http.Handler {
 
 // SecurityHeadersMiddleware adds standard security headers to all HTTP responses.
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("X-Frame-Options", "DENY")
-		w.Header().Set("X-XSS-Protection", "0")
-		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; connect-src *; frame-ancestors 'none'; object-src 'none';")
-
-		// If HTTPS, set Strict-Transport-Security
-		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
-			w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
-		}
-
-		next.ServeHTTP(w, r)
-	})
+	return platformmiddleware.SecurityHeaders()(next)
 }

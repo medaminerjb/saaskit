@@ -47,8 +47,8 @@ The architecture treats developer interfaces (SDKs, CLI, Admin Console) as first
 | **`v0.4.0`** | **Phase 4** | Metadata & Extensible Identity | ✅ Completed | JSONB metadata, schema validation, GIN indexes, metadata events |
 | **`v0.5.0`** | **Phase 5** | API Keys & Event Schema | ✅ Completed | Tenant API Keys, public event model, webhook foundation |
 | **`v0.6.0`** | **Phase 6** | SDKs & Developer Tooling | ✅ Completed | Go SDK, JavaScript SDK, CLI enhancements |
-| **`v0.7.0`** | **Phase 7** | Admin Console v0.1 | 🟡 **OPEN** | Web UI for users, tenants, keys, audit logs |
-| **`v0.8.0`** | **Phase 8** | KMS & Security Hardening | 🟡 **OPEN** | Cloud KMS adapters, key rotation, security fixes |
+| **`v0.7.0`** | **Phase 7** | Admin Console v0.1 | ✅ Completed  | Web UI for users, tenants, keys, audit logs |
+| **`v0.8.0`** | **Phase 8** | KMS & Security Hardening | ✅ Completed | Cloud KMS adapters, key rotation, security fixes |
 | **`v0.9.0`** | **Phase 9** | OpenID Certification Prep | 🟡 **OPEN** | OIDC conformance tests, compliance fixes, documentation |
 | **`v1.0.0`** | **Phase 10** | OpenID Certified GA | 🟡 **OPEN** | OpenID Foundation certification, production-ready |
 | **`v1.2.0`** | **Phase 11** | Integration Platform | 🟡 **OPEN** | Outbound Webhook Engine, OAuth App Provider, Email Abstraction |
@@ -165,26 +165,26 @@ The architecture treats developer interfaces (SDKs, CLI, Admin Console) as first
 
 ---
 
-### Phase 7 — Admin Console v0.1 🟡
+### Phase 7 — Admin Console v0.1 ✅
 
-* **Status:** OPEN · **Release:** `v0.7.0`
+* **Status:** Completed · **Release:** `v0.7.0`
 
-* [ ] **Web UI Framework** — React + Vite setup with authentication
-* [ ] **User Management** — View, edit, disable users with metadata editing
-* [ ] **Tenant Management** — Organization CRUD, member management, metadata editing
-* [ ] **API Key Management** — Create, view, and revoke API keys
-* [ ] **Audit Log Viewer** — Searchable audit event log with filters
+* [x] **Web UI Framework** — React + Vite setup with authentication
+* [x] **User Management** — View, edit, disable users with metadata editing
+* [x] **Tenant Management** — Organization CRUD, member management, metadata editing
+* [x] **API Key Management** — Create, view, and revoke API keys
+* [x] **Audit Log Viewer** — Searchable audit event log with filters
 
 ---
 
-### Phase 8 — KMS & Security Hardening 🟡
+### Phase 8 — KMS & Security Hardening ✅
 
-* **Status:** OPEN · **Release:** `v0.8.0`
+* **Status:** Completed · **Release:** `v0.8.0`
 
-* [ ] **Cloud KMS Adapters** — AWS KMS, GCP KMS, and HashiCorp Vault key management
-* [ ] **JWKS Key Rotation Engine** — Signature key rotation without invalidating active sessions
-* [ ] **Security Hardening** — Additional security fixes and hardening measures
-* [ ] **Security Audit** — Third-party security review and vulnerability fixes
+* [x] **Cloud KMS Adapters** — AWS KMS, GCP KMS, and HashiCorp Vault key management
+* [x] **JWKS Key Rotation Engine** — Signature key rotation without invalidating active sessions
+* [x] **Security Hardening** — Additional security fixes and hardening measures
+* [x] **Security Audit** — Third-party security review and vulnerability fixes
 
 ---
 

@@ -1,12 +1,22 @@
 # SaaSKit
 
+[![CI](https://github.com/medaminerjb/saaskit/actions/workflows/ci.yml/badge.svg)](https://github.com/medaminerjb/saaskit/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/medaminerjb/saaskit?color=blue&logo=github)](https://github.com/medaminerjb/saaskit/releases)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/medaminerjb/saaskit?logo=go)](https://golang.org)
+[![Go Report Card](https://goreportcard.com/badge/github.com/medaminerjb/saas-kit)](https://goreportcard.com/report/github.com/medaminerjb/saas-kit)
+[![CodeQL](https://github.com/medaminerjb/saaskit/actions/workflows/codeql.yml/badge.svg)](https://github.com/medaminerjb/saaskit/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/medaminerjb/saaskit/badge)](https://scorecard.dev/viewer/?uri=github.com/medaminerjb/saaskit)
+[![License](https://img.shields.io/github/license/medaminerjb/saaskit?color=green)](https://github.com/medaminerjb/saaskit/blob/master/LICENSE)
+
+<img src="docs/logos/logo.png" alt="SaaSKit Logo" width="450" style="margin:0 50vh;">
+
 **The open-source, tenancy-native identity and access foundation for SaaS apps.**
 
 SaaSKit provides the foundational infrastructure every multi-tenant SaaS application needs: authentication, organizations, and access control — done once, done well, and reusable across projects.
 
 > A credible open-source alternative to Keycloak with better developer experience.
 
-## Features (v1.0 — in progress)
+## Features 
 
 - **Email/password authentication** with Argon2id password hashing
 - **JWT access tokens** with asymmetric signing (RS256, ES256, EdDSA)
@@ -218,8 +228,8 @@ See the [full roadmap](docs/roadmap.md) for detailed plans through v3.0.
 5. ✅ **Metadata** — extensible JSONB metadata for users and tenants
 6. ✅ **API Keys & Events** — tenant API keys, public event schema, webhook foundation
 7. ✅ **SDKs & Tooling** — Go/JavaScript SDKs, CLI enhancements
-8. � **Admin Console** — web UI for users, tenants, keys, audit logs
-9. 🟡 **Security Hardening** — KMS adapters, key rotation, security fixes
+8. ✅ **Admin Console** — web UI for users, tenants, keys, audit logs
+9. ✅ **Security Hardening** — KMS adapters, key rotation, security fixes
 10. 🟡 **OIDC Certification Prep** — conformance tests, compliance fixes
 11. 🟡 **OpenID Certified GA** — OpenID Foundation certification (v1.0.0)
 
