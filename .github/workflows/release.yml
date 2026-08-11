@@ -61,7 +61,7 @@ jobs:
         run: |
           cosign sign-blob \
             --yes \
-            --output=dist/saaskit_${{ github.ref_name }}_checksums.txt.sig \
+            --output-signature=dist/saaskit_${{ github.ref_name }}_checksums.txt.sig \
             dist/saaskit_${{ github.ref_name }}_checksums.txt
 
       - name: Upload signed checksums

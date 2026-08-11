@@ -1,5 +1,6 @@
 # .goreleaser.yml configuration for SaaSKit
 version: 2
+project_name: saaskit
 
 before:
   hooks:
@@ -32,7 +33,7 @@ archives:
         format: zip
 
 checksum:
-  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  name_template: "{{ .ProjectName }}_{{ .Tag }}_checksums.txt"
 
 changelog:
   sort: asc
