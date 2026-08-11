@@ -44,7 +44,6 @@ keys/*.key
 *.sig
 !keys/.gitkeep
 !keys/README.md
-
 # Docker volumes
 pgdata/
 
