@@ -25,6 +25,20 @@ test: ## Run unit tests
 test-integration: ## Run integration tests (requires running PostgreSQL)
 	go test -v -race -count=1 -run Integration ./...
 
+test-fuzz: ## Run fuzz smoke tests (10s per target)
+	@found=false; \
+	for pkg in $$(go list ./...); do \
+		fuzz_tests=$$(go test "$$pkg" -list '^Fuzz' | grep '^Fuzz' || true); \
+		for test in $$fuzz_tests; do \
+			found=true; \
+			echo "Running fuzz test $$test for $$pkg"; \
+			go test "$$pkg" -fuzz="^$${test}$$" -fuzztime=10s; \
+		done; \
+	done; \
+	if [ "$$found" = false ]; then \
+		echo "No fuzz tests found"; \
+	fi
+
 test-coverage: ## Run tests with coverage report
 	go test -v -race -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
@@ -87,6 +101,10 @@ clean: ## Remove build artifacts
 
 seed: ## Seed development data
 	go run $(MAIN_PATH) seed
+
+test-app: ## Run the interactive test client application on port 3000
+	go run ./examples/test-app/server.go
+
 
 # ─── Help ──────────────────────────────────────────────
 help: ## Show this help
