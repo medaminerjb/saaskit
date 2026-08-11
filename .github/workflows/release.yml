@@ -61,8 +61,12 @@ jobs:
         run: |
           cosign sign-blob \
             --yes \
-            --output-signature=dist/saaskit_${{ github.ref_name }}_checksums.txt.sig \
+            --bundle=dist/saaskit_${{ github.ref_name }}_checksums.txt.bundle \
             dist/saaskit_${{ github.ref_name }}_checksums.txt
+
+          gh release upload ${{ github.ref_name }} dist/saaskit_${{ github.ref_name }}_checksums.txt.bundle --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload signed checksums
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -70,7 +74,7 @@ jobs:
           name: signed-checksums
           path: |
             dist/saaskit_${{ github.ref_name }}_checksums.txt
-            dist/saaskit_${{ github.ref_name }}_checksums.txt.sig
+            dist/saaskit_${{ github.ref_name }}_checksums.txt.bundle
 
 
 
