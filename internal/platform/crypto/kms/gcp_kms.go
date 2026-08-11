@@ -66,7 +66,7 @@ func (k *GCPKMS) Encrypt(ctx context.Context, plaintext []byte) ([]byte, error) 
 	if err != nil {
 		return nil, fmt.Errorf("calling gcp kms: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
@@ -107,7 +107,7 @@ func (k *GCPKMS) Decrypt(ctx context.Context, ciphertext []byte) ([]byte, error)
 	if err != nil {
 		return nil, fmt.Errorf("calling gcp kms: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)

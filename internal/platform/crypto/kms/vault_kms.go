@@ -71,7 +71,7 @@ func (k *VaultKMS) Encrypt(ctx context.Context, plaintext []byte) ([]byte, error
 	if err != nil {
 		return nil, fmt.Errorf("calling vault transit encrypt: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
@@ -113,7 +113,7 @@ func (k *VaultKMS) Decrypt(ctx context.Context, ciphertext []byte) ([]byte, erro
 	if err != nil {
 		return nil, fmt.Errorf("calling vault transit decrypt: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
