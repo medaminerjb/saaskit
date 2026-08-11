@@ -174,6 +174,10 @@ func run() error {
 	})
 	socialHandler.Routes(socialRouter)
 
+	// ─── API Key Service ──────────────────────────────
+	apiKeyRepo := repository.NewAPIKeyRepo(pool)
+	apiKeyService := service.NewAPIKeyService(apiKeyRepo, publisher, logger)
+
 	// ─── HTTP Server ──────────────────────────────────
 	router := handler.NewRouter(handler.RouterConfig{
 		Identity:      identityManager,
@@ -182,6 +186,7 @@ func run() error {
 		OIDCProvider:  oidcHandler,
 		SocialLogin:   socialRouter,
 		TenantService: tenantService,
+		APIKeyService: apiKeyService,
 	})
 
 	srv := &http.Server{
@@ -240,8 +245,8 @@ type cleanupJob struct {
 	fn       func(ctx context.Context) error
 }
 
-func (j *cleanupJob) Name() string            { return j.name }
-func (j *cleanupJob) Interval() time.Duration { return j.interval }
+func (j *cleanupJob) Name() string                  { return j.name }
+func (j *cleanupJob) Interval() time.Duration       { return j.interval }
 func (j *cleanupJob) Run(ctx context.Context) error { return j.fn(ctx) }
 
 func setupLogger(cfg config.LogConfig) *slog.Logger {

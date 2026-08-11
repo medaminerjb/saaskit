@@ -140,11 +140,12 @@ jobs:
           found=false
             
           for pkg in $(go list ./...); do
-            if go test "$pkg" -list 'Fuzz' | grep -q '^Fuzz'; then
+            fuzz_tests=$(go test "$pkg" -list '^Fuzz' | grep '^Fuzz' || true)
+            for test in $fuzz_tests; do
               found=true
-              echo "Running fuzz tests for $pkg"
-              go test "$pkg" -fuzz=Fuzz -fuzztime=10s
-            fi
+              echo "Running fuzz test $test for $pkg"
+              go test "$pkg" -fuzz="^${test}$" -fuzztime=10s
+            done
           done
             
           if [ "$found" = false ]; then
