@@ -744,13 +744,6 @@ func toGrantTypes(ss []string) []oidc.GrantType {
 	return out
 }
 
-func toAccessTokenType(s string) op.AccessTokenType {
-	if s == "jwt" {
-		return op.AccessTokenTypeJWT
-	}
-	return op.AccessTokenTypeBearer
-}
-
 func stringOrEmpty(s *string) string {
 	if s == nil {
 		return ""
