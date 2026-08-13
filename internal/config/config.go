@@ -112,7 +112,7 @@ func Load(configPath string) (*Config, error) {
 	defaults := map[string]interface{}{
 		"env":                 "development",
 		"port":                8080,
-		"base_url":            "http://localhost:8080",
+		"base_url":            "https://fast-readers-post.loca.lt",
 		"database.host":       "localhost",
 		"database.port":       5432,
 		"database.user":       "saaskit",
@@ -123,7 +123,7 @@ func Load(configPath string) (*Config, error) {
 		"database.min_conns":  5,
 		"jwt.algorithm":       "RS256",
 		"jwt.key_path":        "./keys",
-		"jwt.issuer":          "http://localhost:8080",
+		"jwt.issuer":          "https://fast-readers-post.loca.lt",
 		"jwt.access_ttl":      15 * time.Minute,
 		"jwt.refresh_ttl":     7 * 24 * time.Hour,
 		"argon2.memory":       65536,
