@@ -1,63 +1,131 @@
 import { useState, useEffect } from 'react';
+import { saaskitClient } from '../services/saaskit';
+import { useAuth } from '../context/AuthContext';
 
 interface User {
   id: string;
   email: string;
-  name?: string;
+  first_name?: string;
+  last_name?: string;
   status: string;
   created_at: string;
+  metadata_public?: Record<string, unknown>;
+  metadata_private?: Record<string, unknown>;
 }
 
-const INITIAL_USERS: User[] = [
-  { id: 'usr_1', email: 'admin@saaskit.dev', name: 'Admin User', status: 'active', created_at: '2026-01-10T12:00:00Z' },
-  { id: 'usr_2', email: 'jane.doe@example.com', name: 'Jane Doe', status: 'active', created_at: '2026-02-15T09:30:00Z' },
-  { id: 'usr_3', email: 'john.smith@acme.org', name: 'John Smith', status: 'suspended', created_at: '2026-03-01T14:45:00Z' },
-  { id: 'usr_4', email: 'developer@saaskit.dev', name: 'Dev Lead', status: 'active', created_at: '2026-04-20T11:15:00Z' },
-  { id: 'usr_5', email: 'support@example.com', name: 'Support Desk', status: 'active', created_at: '2026-05-02T16:00:00Z' }
-];
-
 export default function Users() {
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showMetadataModal, setShowMetadataModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newEmail, setNewEmail] = useState('');
   const [newName, setNewName] = useState('');
+  const [metadataPublic, setMetadataPublic] = useState('');
+  const [metadataPrivate, setMetadataPrivate] = useState('');
+  const { accessToken } = useAuth();
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 400);
-    return () => clearTimeout(timer);
+    fetchUsers();
   }, []);
 
-  const handleAddUser = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newEmail) return;
-    const newUser: User = {
-      id: `usr_${Date.now()}`,
-      email: newEmail,
-      name: newName || undefined,
-      status: 'active',
-      created_at: new Date().toISOString()
-    };
-    setUsers([newUser, ...users]);
-    setNewEmail('');
-    setNewName('');
-    setShowAddModal(false);
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const fetchedUsers = await saaskitClient.users.listAllUsers(accessToken);
+      setUsers(fetchedUsers);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleUserStatus = (id: string) => {
-    setUsers(users.map(u => {
-      if (u.id === id) {
-        return { ...u, status: u.status === 'active' ? 'suspended' : 'active' };
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail) return;
+    try {
+      await saaskitClient.users.createUserAdmin(
+        accessToken,
+        {
+          email: newEmail,
+          first_name: newName || undefined
+        }
+      );
+      await fetchUsers();
+      setNewEmail('');
+      setNewName('');
+      setShowAddModal(false);
+    } catch (error) {
+      console.error('Failed to create user:', error);
+      alert('Failed to create user. Please try again.');
+    }
+  };
+
+  const toggleUserStatus = async (id: string) => {
+    try {
+      const user = users.find(u => u.id === id);
+      if (!user) return;
+      const newStatus = user.status === 'active' ? 'disabled' : 'active';
+      await saaskitClient.users.updateUserStatus(accessToken, id, newStatus);
+      await fetchUsers();
+    } catch (error) {
+      console.error('Failed to update user status:', error);
+    }
+  };
+
+  const handleEditMetadata = (user: User) => {
+    setSelectedUser(user);
+    setMetadataPublic(user.metadata_public ? JSON.stringify(user.metadata_public, null, 2) : '');
+    setMetadataPrivate(user.metadata_private ? JSON.stringify(user.metadata_private, null, 2) : '');
+    setShowMetadataModal(true);
+  };
+
+  const handleSaveMetadata = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+
+    let parsedPublic: Record<string, unknown> | undefined;
+    let parsedPrivate: Record<string, unknown> | undefined;
+
+    try {
+      if (metadataPublic.trim()) {
+        parsedPublic = JSON.parse(metadataPublic);
       }
-      return u;
-    }));
+      if (metadataPrivate.trim()) {
+        parsedPrivate = JSON.parse(metadataPrivate);
+      }
+
+      await saaskitClient.users.updateUserMetadataAdmin(
+        accessToken,
+        selectedUser.id,
+        {
+          metadata_public: parsedPublic,
+          metadata_private: parsedPrivate
+        }
+      );
+
+      await fetchUsers();
+      setShowMetadataModal(false);
+      setSelectedUser(null);
+      setMetadataPublic('');
+      setMetadataPrivate('');
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        alert('Invalid JSON format. Please check your input.');
+      } else {
+        console.error('Failed to update user metadata:', error);
+        alert('Failed to update metadata. Please try again.');
+      }
+    }
   };
 
   const filteredUsers = users.filter(
     (user) =>
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.first_name && user.first_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.last_name && user.last_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -154,7 +222,7 @@ export default function Users() {
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-semibold text-gray-900">{user.email}</div>
-                        <div className="text-sm text-gray-500">{user.name || 'No name'}</div>
+                        <div className="text-sm text-gray-500">{user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.first_name || user.last_name || 'No name'}</div>
                       </div>
                     </div>
                   </td>
@@ -174,6 +242,12 @@ export default function Users() {
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4.5 whitespace-nowrap text-right text-sm font-medium">
+                    <button 
+                      onClick={() => handleEditMetadata(user)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-primary-200 text-primary-600 hover:bg-primary-50 transition-all duration-200 hover:shadow-xs cursor-pointer mr-2"
+                    >
+                      Edit Metadata
+                    </button>
                     <button 
                       onClick={() => toggleUserStatus(user.id)}
                       className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all duration-200 hover:shadow-xs cursor-pointer ${
@@ -243,6 +317,80 @@ export default function Users() {
                   className="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-semibold hover:bg-primary-700 transition-all duration-200 shadow-sm cursor-pointer"
                 >
                   Add User
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showMetadataModal && selectedUser && (
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-xs flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Edit User Metadata</h3>
+                <p className="text-sm text-gray-500 mt-1">{selectedUser.email}</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowMetadataModal(false);
+                  setSelectedUser(null);
+                  setMetadataPublic('');
+                  setMetadataPrivate('');
+                }}
+                className="text-gray-400 hover:text-gray-600 rounded-lg p-1 hover:bg-gray-55"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleSaveMetadata}>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Public Metadata
+                    <span className="text-gray-400 font-normal ml-2">(visible to client applications)</span>
+                  </label>
+                  <textarea
+                    className="block w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none transition-all duration-200 text-sm font-mono min-h-32"
+                    placeholder='{"key": "value"}'
+                    value={metadataPublic}
+                    onChange={(e) => setMetadataPublic(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Private Metadata
+                    <span className="text-gray-400 font-normal ml-2">(server-side only)</span>
+                  </label>
+                  <textarea
+                    className="block w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none transition-all duration-200 text-sm font-mono min-h-32"
+                    placeholder='{"key": "value"}'
+                    value={metadataPrivate}
+                    onChange={(e) => setMetadataPrivate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="px-6 py-4.5 bg-gray-50 border-t border-gray-100 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMetadataModal(false);
+                    setSelectedUser(null);
+                    setMetadataPublic('');
+                    setMetadataPrivate('');
+                  }}
+                  className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 bg-white hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-semibold hover:bg-primary-700 transition-all duration-200 shadow-sm cursor-pointer"
+                >
+                  Save Metadata
                 </button>
               </div>
             </form>

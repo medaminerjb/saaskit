@@ -166,4 +166,27 @@ export class TenantsClient {
       accessToken
     );
   }
+
+  // Admin methods
+  async listAllTenants(accessToken: string): Promise<Tenant[]> {
+    const response = await this.client.request<{ tenants: Tenant[] }>(
+      '/api/v1/admin/tenants',
+      {},
+      accessToken
+    );
+    return response.data.tenants;
+  }
+
+  async deleteTenantAdmin(
+    accessToken: string,
+    tenantId: string
+  ): Promise<void> {
+    await this.client.request<void>(
+      `/api/v1/admin/tenants/${tenantId}`,
+      {
+        method: 'DELETE',
+      },
+      accessToken
+    );
+  }
 }
