@@ -138,6 +138,12 @@ func LoginHandler(storage *Storage) http.HandlerFunc {
 			return
 		}
 
+		// If the auth request is already completed (session reuse), skip the login form
+		if req, err := storage.AuthRequestByID(r.Context(), authRequestID); err == nil && req.Done() {
+			http.Redirect(w, r, "/authorize/callback?id="+authRequestID, http.StatusFound)
+			return
+		}
+
 		data := loginData{
 			AuthRequestID: authRequestID,
 			LoginHint:     r.URL.Query().Get("login_hint"),

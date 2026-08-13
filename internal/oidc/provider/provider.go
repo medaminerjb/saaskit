@@ -13,7 +13,9 @@ func SetupProvider(issuer string, storage *Storage, logger *slog.Logger) (http.H
 	config := &op.Config{
 		CodeMethodS256:        true,
 		AuthMethodPost:        true,
+		AuthMethodPrivateKeyJWT: false,
 		GrantTypeRefreshToken: true,
+		SupportedScopes:       []string{"openid", "profile", "email", "address", "phone", "offline_access"},
 	}
 
 	provider, err := op.NewProvider(
@@ -27,6 +29,17 @@ func SetupProvider(issuer string, storage *Storage, logger *slog.Logger) (http.H
 	}
 
 	r := chi.NewRouter()
+
+	// Ensure RFC 6749 5.1 cache-control headers on token and userinfo responses
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			if req.URL.Path == "/oauth/token" || req.URL.Path == "/token" || req.URL.Path == "/userinfo" {
+				w.Header().Set("Cache-Control", "no-store")
+				w.Header().Set("Pragma", "no-cache")
+			}
+			next.ServeHTTP(w, req)
+		})
+	})
 
 	// Mount the standard OIDC endpoints from zitadel/oidc
 	r.Mount("/", provider)

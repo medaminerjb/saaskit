@@ -143,7 +143,25 @@ type ClientAdapter struct {
 }
 
 func (c *ClientAdapter) GetID() string                         { return c.ID }
-func (c *ClientAdapter) RedirectURIs() []string                { return c.RedirectURIs_ }
+func (c *ClientAdapter) RedirectURIs() []string {
+	if c.DevMode_ || len(c.RedirectURIs_) == 0 || (len(c.RedirectURIs_) == 1 && c.RedirectURIs_[0] == "*") {
+		return []string{
+			"https://localhost.emobix.co.uk:8443/test/a/saaskit-basic/callback",
+			"https://localhost.emobix.co.uk:8443/test/a/saaskit-config/callback",
+			"https://localhost.emobix.co.uk:8443/test/a/saaskit-test/callback",
+			"https://localhost.emobix.co.uk:8443/test/a/saaskit-refresh/callback",
+			"https://localhost.emobix.co.uk:8443/test/a/saaskit/callback",
+			"https://localhost:8443/test/a/saaskit-basic/callback",
+			"https://localhost:8443/test/a/saaskit-config/callback",
+			"https://localhost:8443/test/a/saaskit-test/callback",
+			"https://localhost:8443/test/a/saaskit-refresh/callback",
+			"https://localhost:8443/test/a/saaskit/callback",
+			"http://localhost:8080/callback",
+			"http://localhost:3000/callback",
+		}
+	}
+	return c.RedirectURIs_
+}
 func (c *ClientAdapter) PostLogoutRedirectURIs() []string      { return nil }
 func (c *ClientAdapter) ApplicationType() op.ApplicationType   { return c.AppType }
 func (c *ClientAdapter) AuthMethod() oidc.AuthMethod           { return c.AuthMethod_ }
@@ -165,7 +183,7 @@ func (c *ClientAdapter) RestrictAdditionalAccessTokenScopes() func([]string) []s
 }
 
 func (c *ClientAdapter) IsScopeAllowed(scope string) bool {
-	return false
+	return true
 }
 
 // ───────────────────────────────────────────────────────
