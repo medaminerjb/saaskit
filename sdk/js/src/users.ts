@@ -17,6 +17,30 @@ export interface UpdateUserRequest {
   last_name?: string;
 }
 
+export interface AdminUser {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  email_verified: boolean;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  metadata_public?: Record<string, any>;
+  metadata_private?: Record<string, any>;
+}
+
+export interface UpdateAdminUserMetadataRequest {
+  metadata_public?: Record<string, any>;
+  metadata_private?: Record<string, any>;
+}
+
+export interface CreateAdminUserRequest {
+  email: string;
+  first_name?: string;
+  last_name?: string;
+}
+
 export interface Session {
   id: string;
   user_agent: string;
@@ -73,5 +97,62 @@ export class UsersClient {
       },
       accessToken
     );
+  }
+
+  // Admin methods
+  async listAllUsers(accessToken: string): Promise<AdminUser[]> {
+    const response = await this.client.request<{ users: AdminUser[] }>(
+      '/api/v1/admin/users',
+      {},
+      accessToken
+    );
+    return response.data.users;
+  }
+
+  async updateUserStatus(
+    accessToken: string,
+    userId: string,
+    status: string
+  ): Promise<AdminUser> {
+    const response = await this.client.request<AdminUser>(
+      `/api/v1/admin/users/${userId}/status`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      },
+      accessToken
+    );
+    return response.data;
+  }
+
+  async updateUserMetadataAdmin(
+    accessToken: string,
+    userId: string,
+    request: UpdateAdminUserMetadataRequest
+  ): Promise<AdminUser> {
+    const response = await this.client.request<AdminUser>(
+      `/api/v1/admin/users/${userId}/metadata`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(request),
+      },
+      accessToken
+    );
+    return response.data;
+  }
+
+  async createUserAdmin(
+    accessToken: string,
+    request: CreateAdminUserRequest
+  ): Promise<AdminUser> {
+    const response = await this.client.request<AdminUser>(
+      '/api/v1/admin/users',
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      },
+      accessToken
+    );
+    return response.data;
   }
 }
