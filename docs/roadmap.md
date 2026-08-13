@@ -170,8 +170,11 @@ The architecture treats developer interfaces (SDKs, CLI, Admin Console) as first
 * **Status:** Completed · **Release:** `v0.7.0`
 
 * [x] **Web UI Framework** — React + Vite setup with authentication
-* [x] **User Management** — View, edit, disable users with metadata editing
-* [x] **Tenant Management** — Organization CRUD, member management, metadata editing
+* [x] **User Management** — View, edit, disable users
+* [x] **User Metadata Editing** — Add metadata editing to user management UI
+* [x] **Tenant Management** — Organization CRUD operations
+* [x] **Tenant Member Management** — Add member management to tenant UI
+* [x] **Tenant Metadata Editing** — Add metadata editing to tenant management UI
 * [x] **API Key Management** — Create, view, and revoke API keys
 * [x] **Audit Log Viewer** — Searchable audit event log with filters
 
@@ -206,6 +209,7 @@ The architecture treats developer interfaces (SDKs, CLI, Admin Console) as first
 
 * [ ] **OpenID Foundation Certification** — Submit and pass OpenID Connect certification
 * [ ] **Production Readiness** — Performance testing, load testing, and production deployment guides
+* [ ] **Swagger/OpenAPI Documentation** — Interactive API documentation with Swagger UI for all REST endpoints
 * [ ] **Starter Template Generator** — `saaskit create` for instant local project bootstrapping
 * [ ] **Documentation Platform** — Quickstarts, deployment guides, and examples repository
 * [ ] **Release Engineering** — Signed releases, security advisories, and update mechanism
