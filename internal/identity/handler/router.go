@@ -123,10 +123,15 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	// This fallback is only used when the OIDC provider is not mounted.
 	if cfg.OIDCProvider == nil {
 		r.Get("/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
-			baseURL := r.Header.Get("X-Forwarded-Proto") + "://" + r.Host
-			if baseURL == "://" {
-				baseURL = "http://" + r.Host
+			scheme := r.Header.Get("X-Forwarded-Proto")
+			if scheme == "" {
+				if r.TLS != nil {
+					scheme = "https"
+				} else {
+					scheme = "http"
+				}
 			}
+			baseURL := scheme + "://" + r.Host
 			writeJSON(w, http.StatusOK, map[string]any{
 				"issuer":                                baseURL,
 				"authorization_endpoint":                baseURL + "/authorize",
@@ -137,8 +142,9 @@ func NewRouter(cfg RouterConfig) http.Handler {
 				"introspection_endpoint":                baseURL + "/oauth/introspect",
 				"response_types_supported":              []string{"code"},
 				"subject_types_supported":               []string{"public"},
-				"id_token_signing_alg_values_supported": []string{"RS256", "ES256", "EdDSA"},
-				"scopes_supported":                      []string{"openid", "profile", "email"},
+				"claims_supported":                      []string{"sub", "iss", "aud", "exp", "iat", "auth_time", "nonce", "email", "email_verified", "name", "preferred_username", "picture", "updated_at"},
+				"response_modes_supported":             []string{"query", "fragment"},
+				"scopes_supported":                      []string{"openid", "profile", "email", "address", "phone", "offline_access"},
 				"token_endpoint_auth_methods_supported": []string{"client_secret_basic", "client_secret_post", "none"},
 				"grant_types_supported":                 []string{"authorization_code", "refresh_token"},
 				"code_challenge_methods_supported":      []string{"S256"},
