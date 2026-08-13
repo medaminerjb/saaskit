@@ -49,7 +49,7 @@ The architecture treats developer interfaces (SDKs, CLI, Admin Console) as first
 | **`v0.6.0`** | **Phase 6** | SDKs & Developer Tooling | ✅ Completed | Go SDK, JavaScript SDK, CLI enhancements |
 | **`v0.7.0`** | **Phase 7** | Admin Console v0.1 | ✅ Completed  | Web UI for users, tenants, keys, audit logs |
 | **`v0.8.0`** | **Phase 8** | KMS & Security Hardening | ✅ Completed | Cloud KMS adapters, key rotation, security fixes |
-| **`v0.9.0`** | **Phase 9** | OpenID Certification Prep | 🟡 **OPEN** | OIDC conformance tests, compliance fixes, documentation |
+| **`v0.9.0`** | **Phase 9** | OpenID Certification Prep | ✅ Completed | OIDC conformance tests, compliance fixes, documentation |
 | **`v1.0.0`** | **Phase 10** | OpenID Certified GA | 🟡 **OPEN** | OpenID Foundation certification, production-ready |
 | **`v1.2.0`** | **Phase 11** | Integration Platform | 🟡 **OPEN** | Outbound Webhook Engine, OAuth App Provider, Email Abstraction |
 | **`v1.5.0`** | **Phase 12** | Enterprise Federation | 🟡 **OPEN** | SAML 2.0, Home Realm Discovery, SCIM 2.0, LDAP Directory Sync |
@@ -188,15 +188,15 @@ The architecture treats developer interfaces (SDKs, CLI, Admin Console) as first
 
 ---
 
-### Phase 9 — OpenID Certification Prep 🟡
+### Phase 9 — OpenID Certification Prep ✅
 
-* **Status:** OPEN · **Release:** `v0.9.0`
+* **Status:** Completed · **Release:** `v0.9.0`
 
-* [ ] **OIDC Conformance Tests** — Run OpenID Foundation conformance test suite
-* [ ] **Compliance Fixes** — Address any OIDC specification compliance issues
-* [ ] **Documentation Updates** — Complete OIDC provider documentation
-* [ ] **Discovery Document** — Ensure `.well-known/openid-configuration` is fully compliant
-* [ ] **UserInfo Endpoint** — Verify UserInfo endpoint returns all required claims
+* [x] **OIDC Conformance Tests** — Run OpenID Foundation conformance test suite
+* [x] **Compliance Fixes** — Address any OIDC specification compliance issues
+* [x] **Documentation Updates** — Complete OIDC provider documentation
+* [x] **Discovery Document** — Ensure `.well-known/openid-configuration` is fully compliant
+* [x] **UserInfo Endpoint** — Verify UserInfo endpoint returns all required claims
 
 ---
 
