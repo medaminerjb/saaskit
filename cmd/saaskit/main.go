@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	_ "github.com/medaminerjb/saas-kit/docs" // swagger docs
 	"github.com/medaminerjb/saas-kit/internal/audit"
 	"github.com/medaminerjb/saas-kit/internal/config"
 	idcrypto "github.com/medaminerjb/saas-kit/internal/identity/crypto"
@@ -28,6 +29,26 @@ import (
 	tenantrepo "github.com/medaminerjb/saas-kit/internal/tenant/repository"
 	tenantservice "github.com/medaminerjb/saas-kit/internal/tenant/service"
 )
+
+// @title           SaaSKit API
+// @version         1.0
+// @description     Enterprise-grade Identity and Access Management platform with OIDC, multi-tenant support, and API key management.
+// @termsOfService  https://github.com/medaminerjb/saas-kit/blob/main/TERMS.md
+
+// @contact.name   SaaSKit Support
+// @contact.url    https://github.com/medaminerjb/saas-kit/issues
+// @contact.email  support@saaskit.io
+
+// @license.name  MIT
+// @license.url   https://github.com/medaminerjb/saas-kit/blob/main/LICENSE
+
+// @host      localhost:8080
+// @BasePath  /api/v1
+
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description Enter the token with the `Bearer ` prefix, e.g. "Bearer abcde12345"
 
 func main() {
 	if err := run(); err != nil {
