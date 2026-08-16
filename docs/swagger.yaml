@@ -1,0 +1,1346 @@
+basePath: /api/v1
+definitions:
+  domain.APIKey:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      key_prefix:
+        description: sk_live_ or sk_test_
+        type: string
+      last_used_at:
+        type: string
+      name:
+        type: string
+      revoked_at:
+        type: string
+      revoked_by:
+        type: string
+      scopes:
+        items:
+          type: string
+        type: array
+      status:
+        $ref: '#/definitions/domain.APIKeyStatus'
+      tenant_id:
+        type: string
+      type:
+        $ref: '#/definitions/domain.APIKeyType'
+    type: object
+  domain.APIKeyStatus:
+    enum:
+    - active
+    - revoked
+    - expired
+    type: string
+    x-enum-varnames:
+    - APIKeyStatusActive
+    - APIKeyStatusRevoked
+    - APIKeyStatusExpired
+  domain.APIKeyType:
+    enum:
+    - test
+    - live
+    type: string
+    x-enum-varnames:
+    - APIKeyTypeTest
+    - APIKeyTypeLive
+  domain.MemberRole:
+    enum:
+    - owner
+    - admin
+    - manager
+    - member
+    - viewer
+    type: string
+    x-enum-varnames:
+    - RoleOwner
+    - RoleAdmin
+    - RoleManager
+    - RoleMember
+    - RoleViewer
+  domain.Tenant:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      metadata:
+        additionalProperties: true
+        type: object
+      name:
+        type: string
+      plan:
+        type: string
+      slug:
+        type: string
+      status:
+        $ref: '#/definitions/domain.TenantStatus'
+      updated_at:
+        type: string
+    type: object
+  domain.TenantStatus:
+    enum:
+    - active
+    - suspended
+    type: string
+    x-enum-varnames:
+    - TenantStatusActive
+    - TenantStatusSuspended
+  handler.CreateRequest:
+    properties:
+      expires_at:
+        type: string
+      name:
+        type: string
+      scopes:
+        items:
+          type: string
+        type: array
+      type:
+        $ref: '#/definitions/domain.APIKeyType'
+    type: object
+  handler.CreateResponse:
+    properties:
+      full_key:
+        description: The full API key (only shown once)
+        type: string
+      key:
+        $ref: '#/definitions/domain.APIKey'
+    type: object
+  handler.acceptInvitationRequest:
+    properties:
+      token:
+        type: string
+    type: object
+  handler.createTenantRequest:
+    properties:
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  handler.forgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  handler.inviteMemberRequest:
+    properties:
+      email:
+        type: string
+      role:
+        $ref: '#/definitions/domain.MemberRole'
+    type: object
+  handler.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handler.refreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  handler.registerRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  handler.resetPasswordRequest:
+    properties:
+      new_password:
+        type: string
+      token:
+        type: string
+    type: object
+  handler.switchTenantRequest:
+    properties:
+      tenant_id:
+        type: string
+    type: object
+  handler.updateMeRequest:
+    properties:
+      avatar_url:
+        type: string
+      name:
+        type: string
+    type: object
+  handler.updateMetadataRequest:
+    properties:
+      metadata_private:
+        additionalProperties: true
+        type: object
+      metadata_public:
+        additionalProperties: true
+        type: object
+    type: object
+  handler.updateTenantMetadataRequest:
+    properties:
+      metadata:
+        additionalProperties: true
+        type: object
+    type: object
+  handler.updateTenantRequest:
+    properties:
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  handler.verifyEmailRequest:
+    properties:
+      token:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@saaskit.io
+    name: SaaSKit Support
+    url: https://github.com/medaminerjb/saas-kit/issues
+  description: Enterprise-grade Identity and Access Management platform with OIDC,
+    multi-tenant support, and API key management.
+  license:
+    name: MIT
+    url: https://github.com/medaminerjb/saas-kit/blob/main/LICENSE
+  termsOfService: https://github.com/medaminerjb/saas-kit/blob/main/TERMS.md
+  title: SaaSKit API
+  version: "1.0"
+paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Send a password reset email to the user
+      parameters:
+      - description: Email address
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.forgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reset email sent (if account exists)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Request password reset
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user with email and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Account disabled or locked
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidate the current session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: User logout
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get a new access token using a refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.refreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tokens refreshed
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid or expired token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh access token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with email, password, and name
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: User already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password using a token from email
+      parameters:
+      - description: Reset token and new password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.resetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset successful
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request or token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset password
+      tags:
+      - auth
+  /auth/verify-email:
+    post:
+      consumes:
+      - application/json
+      description: Verify user email using a token from email
+      parameters:
+      - description: Verification token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.verifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email verified
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request or token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify email address
+      tags:
+      - auth
+  /tenants:
+    get:
+      consumes:
+      - application/json
+      description: Get all organizations the user is a member of
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of tenants
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to list
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: List tenants
+      tags:
+      - tenants
+    post:
+      consumes:
+      - application/json
+      description: Create a new organization/tenant
+      parameters:
+      - description: Tenant details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createTenantRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tenant created
+          schema:
+            $ref: '#/definitions/domain.Tenant'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Create tenant
+      tags:
+      - tenants
+  /tenants/{tenantID}:
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific organization
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tenant details
+          schema:
+            $ref: '#/definitions/domain.Tenant'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Not a member
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Tenant not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get tenant
+      tags:
+      - tenants
+    patch:
+      consumes:
+      - application/json
+      description: Update organization details
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      - description: Tenant updates
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateTenantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated tenant
+          schema:
+            $ref: '#/definitions/domain.Tenant'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Insufficient permissions
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Update tenant
+      tags:
+      - tenants
+  /tenants/{tenantID}/api-keys:
+    get:
+      consumes:
+      - application/json
+      description: Get all API keys for a tenant
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of API keys
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to list
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: List API keys
+      tags:
+      - api-keys
+    post:
+      consumes:
+      - application/json
+      description: Create a new API key for a tenant
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      - description: API key details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: API key created
+          schema:
+            $ref: '#/definitions/handler.CreateResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to create
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Create API key
+      tags:
+      - api-keys
+  /tenants/{tenantID}/api-keys/{keyID}:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently delete an API key
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      - description: API Key ID
+        in: path
+        name: keyID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: API key deleted
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to delete
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Delete API key
+      tags:
+      - api-keys
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific API key
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      - description: API Key ID
+        in: path
+        name: keyID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: API key details
+          schema:
+            $ref: '#/definitions/domain.APIKey'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: API key not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get API key
+      tags:
+      - api-keys
+  /tenants/{tenantID}/api-keys/{keyID}/revoke:
+    post:
+      consumes:
+      - application/json
+      description: Revoke an API key (soft delete)
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      - description: API Key ID
+        in: path
+        name: keyID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: API key revoked
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to revoke
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Revoke API key
+      tags:
+      - api-keys
+  /tenants/{tenantID}/members:
+    get:
+      consumes:
+      - application/json
+      description: Get all members of an organization
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of members
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Not a member
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to list
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: List tenant members
+      tags:
+      - tenants
+    post:
+      consumes:
+      - application/json
+      description: Invite a user to join an organization
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      - description: Invitation details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.inviteMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Invitation created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Insufficient permissions
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Invite member
+      tags:
+      - tenants
+  /tenants/{tenantID}/members/{userID}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a member from an organization
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      - description: User ID to remove
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Member removed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Insufficient permissions
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Remove member
+      tags:
+      - tenants
+  /tenants/{tenantID}/metadata:
+    get:
+      consumes:
+      - application/json
+      description: Get metadata for an organization
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tenant metadata
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Not a member
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Tenant not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get tenant metadata
+      tags:
+      - tenants
+    patch:
+      consumes:
+      - application/json
+      description: Update metadata for an organization
+      parameters:
+      - description: Tenant ID
+        in: path
+        name: tenantID
+        required: true
+        type: string
+      - description: Metadata updates
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateTenantMetadataRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated metadata
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Insufficient permissions
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Update tenant metadata
+      tags:
+      - tenants
+  /tenants/invitations/accept:
+    post:
+      consumes:
+      - application/json
+      description: Accept an invitation to join an organization
+      parameters:
+      - description: Invitation token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.acceptInvitationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Invitation accepted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Accept invitation
+      tags:
+      - tenants
+  /tenants/switch:
+    post:
+      consumes:
+      - application/json
+      description: Switch the currently active organization
+      parameters:
+      - description: Tenant ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.switchTenantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Switch successful
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Switch active tenant
+      tags:
+      - tenants
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get the authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get current user
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: Update the authenticated user's profile
+      parameters:
+      - description: Profile updates
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateMeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated user profile
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Update failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Update current user
+      tags:
+      - users
+  /users/me/metadata:
+    get:
+      consumes:
+      - application/json
+      description: Get public metadata for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User metadata
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get user metadata
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: Update metadata for the authenticated user
+      parameters:
+      - description: Metadata updates
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateMetadataRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated metadata
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Update failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Update user metadata
+      tags:
+      - users
+  /users/me/sessions:
+    get:
+      consumes:
+      - application/json
+      description: Get all active sessions for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of sessions
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: List user sessions
+      tags:
+      - users
+  /users/me/sessions/{sessionID}:
+    delete:
+      consumes:
+      - application/json
+      description: Revoke a specific session for the authenticated user
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session revoked
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid session ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Revoke failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Revoke a session
+      tags:
+      - users
+securityDefinitions:
+  Bearer:
+    description: Enter the token with the `Bearer ` prefix, e.g. "Bearer abcde12345"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -57,6 +57,19 @@ type CreateResponse struct {
 }
 
 // Create creates a new API key.
+// @Summary Create API key
+// @Description Create a new API key for a tenant
+// @Tags api-keys
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Param request body CreateRequest true "API key details"
+// @Success 201 {object} CreateResponse "API key created"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Failed to create"
+// @Router /tenants/{tenantID}/api-keys [post]
 func (h *APIKeyHandler) Create(w http.ResponseWriter, r *http.Request) {
 	tenantID, err := uuid.Parse(chi.URLParam(r, "tenantID"))
 	if err != nil {
@@ -98,6 +111,18 @@ func (h *APIKeyHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // List lists all API keys for a tenant.
+// @Summary List API keys
+// @Description Get all API keys for a tenant
+// @Tags api-keys
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Success 200 {object} map[string]interface{} "List of API keys"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Failed to list"
+// @Router /tenants/{tenantID}/api-keys [get]
 func (h *APIKeyHandler) List(w http.ResponseWriter, r *http.Request) {
 	tenantID, err := uuid.Parse(chi.URLParam(r, "tenantID"))
 	if err != nil {
@@ -116,6 +141,19 @@ func (h *APIKeyHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get retrieves a specific API key.
+// @Summary Get API key
+// @Description Get details of a specific API key
+// @Tags api-keys
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Param keyID path string true "API Key ID"
+// @Success 200 {object} domain.APIKey "API key details"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "API key not found"
+// @Router /tenants/{tenantID}/api-keys/{keyID} [get]
 func (h *APIKeyHandler) Get(w http.ResponseWriter, r *http.Request) {
 	tenantID, err := uuid.Parse(chi.URLParam(r, "tenantID"))
 	if err != nil {
@@ -140,6 +178,19 @@ func (h *APIKeyHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 // Revoke revokes an API key.
+// @Summary Revoke API key
+// @Description Revoke an API key (soft delete)
+// @Tags api-keys
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Param keyID path string true "API Key ID"
+// @Success 204 "API key revoked"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Failed to revoke"
+// @Router /tenants/{tenantID}/api-keys/{keyID}/revoke [post]
 func (h *APIKeyHandler) Revoke(w http.ResponseWriter, r *http.Request) {
 	tenantID, err := uuid.Parse(chi.URLParam(r, "tenantID"))
 	if err != nil {
@@ -175,6 +226,19 @@ func (h *APIKeyHandler) Revoke(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete permanently deletes an API key.
+// @Summary Delete API key
+// @Description Permanently delete an API key
+// @Tags api-keys
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Param keyID path string true "API Key ID"
+// @Success 204 "API key deleted"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Failed to delete"
+// @Router /tenants/{tenantID}/api-keys/{keyID} [delete]
 func (h *APIKeyHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	tenantID, err := uuid.Parse(chi.URLParam(r, "tenantID"))
 	if err != nil {

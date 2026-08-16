@@ -59,6 +59,18 @@ type createTenantRequest struct {
 	Slug string `json:"slug,omitempty"`
 }
 
+// Create creates a new tenant.
+// @Summary Create tenant
+// @Description Create a new organization/tenant
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body createTenantRequest true "Tenant details"
+// @Success 201 {object} domain.Tenant "Tenant created"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Router /tenants [post]
 func (h *TenantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	claims := GetClaims(r.Context())
 	if claims == nil {
@@ -87,6 +99,17 @@ func (h *TenantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, t)
 }
 
+// List lists all tenants for the authenticated user.
+// @Summary List tenants
+// @Description Get all organizations the user is a member of
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} map[string]interface{} "List of tenants"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Failed to list"
+// @Router /tenants [get]
 func (h *TenantHandler) List(w http.ResponseWriter, r *http.Request) {
 	claims := GetClaims(r.Context())
 	if claims == nil {
@@ -126,6 +149,18 @@ type switchTenantRequest struct {
 	TenantID string `json:"tenant_id"`
 }
 
+// Switch switches the active tenant for the user.
+// @Summary Switch active tenant
+// @Description Switch the currently active organization
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body switchTenantRequest true "Tenant ID"
+// @Success 200 {object} map[string]string "Switch successful"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Router /tenants/switch [post]
 func (h *TenantHandler) Switch(w http.ResponseWriter, r *http.Request) {
 	claims := GetClaims(r.Context())
 	if claims == nil {
@@ -163,6 +198,18 @@ type acceptInvitationRequest struct {
 	Token string `json:"token"`
 }
 
+// AcceptInvitation accepts a tenant invitation.
+// @Summary Accept invitation
+// @Description Accept an invitation to join an organization
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body acceptInvitationRequest true "Invitation token"
+// @Success 200 {object} map[string]string "Invitation accepted"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Router /tenants/invitations/accept [post]
 func (h *TenantHandler) AcceptInvitation(w http.ResponseWriter, r *http.Request) {
 	claims := GetClaims(r.Context())
 	if claims == nil {
@@ -195,6 +242,19 @@ func (h *TenantHandler) AcceptInvitation(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, map[string]string{"message": "invitation accepted"})
 }
 
+// Get retrieves a tenant by ID.
+// @Summary Get tenant
+// @Description Get details of a specific organization
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Success 200 {object} domain.Tenant "Tenant details"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Not a member"
+// @Failure 404 {object} map[string]string "Tenant not found"
+// @Router /tenants/{tenantID} [get]
 func (h *TenantHandler) Get(w http.ResponseWriter, r *http.Request) {
 	tenantID, ok := GetTenantID(r.Context())
 	if !ok {
@@ -216,6 +276,20 @@ type updateTenantRequest struct {
 	Slug string `json:"slug,omitempty"`
 }
 
+// Update updates a tenant.
+// @Summary Update tenant
+// @Description Update organization details
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Param request body updateTenantRequest true "Tenant updates"
+// @Success 200 {object} domain.Tenant "Updated tenant"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Insufficient permissions"
+// @Router /tenants/{tenantID} [patch]
 func (h *TenantHandler) Update(w http.ResponseWriter, r *http.Request) {
 	tenantID, ok := GetTenantID(r.Context())
 	if !ok {
@@ -242,6 +316,19 @@ type updateTenantMetadataRequest struct {
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
+// GetMetadata retrieves tenant metadata.
+// @Summary Get tenant metadata
+// @Description Get metadata for an organization
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Success 200 {object} map[string]interface{} "Tenant metadata"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Not a member"
+// @Failure 404 {object} map[string]string "Tenant not found"
+// @Router /tenants/{tenantID}/metadata [get]
 func (h *TenantHandler) GetMetadata(w http.ResponseWriter, r *http.Request) {
 	tenantID, ok := GetTenantID(r.Context())
 	if !ok {
@@ -260,6 +347,20 @@ func (h *TenantHandler) GetMetadata(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// UpdateMetadata updates tenant metadata.
+// @Summary Update tenant metadata
+// @Description Update metadata for an organization
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Param request body updateTenantMetadataRequest true "Metadata updates"
+// @Success 200 {object} map[string]interface{} "Updated metadata"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Insufficient permissions"
+// @Router /tenants/{tenantID}/metadata [patch]
 func (h *TenantHandler) UpdateMetadata(w http.ResponseWriter, r *http.Request) {
 	tenantID, ok := GetTenantID(r.Context())
 	if !ok {
@@ -284,6 +385,19 @@ func (h *TenantHandler) UpdateMetadata(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ListMembers lists all members of a tenant.
+// @Summary List tenant members
+// @Description Get all members of an organization
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Success 200 {object} map[string]interface{} "List of members"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Not a member"
+// @Failure 500 {object} map[string]string "Failed to list"
+// @Router /tenants/{tenantID}/members [get]
 func (h *TenantHandler) ListMembers(w http.ResponseWriter, r *http.Request) {
 	tenantID, ok := GetTenantID(r.Context())
 	if !ok {
@@ -305,6 +419,20 @@ type inviteMemberRequest struct {
 	Role  domain.MemberRole `json:"role"`
 }
 
+// InviteMember invites a new member to the tenant.
+// @Summary Invite member
+// @Description Invite a user to join an organization
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Param request body inviteMemberRequest true "Invitation details"
+// @Success 201 {object} map[string]interface{} "Invitation created"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Insufficient permissions"
+// @Router /tenants/{tenantID}/members [post]
 func (h *TenantHandler) InviteMember(w http.ResponseWriter, r *http.Request) {
 	tenantID, ok := GetTenantID(r.Context())
 	if !ok {
@@ -334,6 +462,20 @@ func (h *TenantHandler) InviteMember(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// RemoveMember removes a member from the tenant.
+// @Summary Remove member
+// @Description Remove a member from an organization
+// @Tags tenants
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param tenantID path string true "Tenant ID"
+// @Param userID path string true "User ID to remove"
+// @Success 200 {object} map[string]string "Member removed"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Insufficient permissions"
+// @Router /tenants/{tenantID}/members/{userID} [delete]
 func (h *TenantHandler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 	tenantID, ok := GetTenantID(r.Context())
 	role, ok2 := GetTenantRole(r.Context())

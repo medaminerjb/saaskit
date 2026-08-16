@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/medaminerjb/saas-kit/internal/platform/database"
@@ -44,7 +45,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	r.Use(chimiddleware.RequestID)
 	r.Use(clientInfoMiddleware)
 	r.Use(SecurityHeadersMiddleware)
-	
+
 	// IP-based rate limiting: 20 req/sec per IP, burst of 40
 	limiter := NewRateLimiter(20.0, 40.0)
 	r.Use(limiter.Limit)
@@ -64,6 +65,9 @@ func NewRouter(cfg RouterConfig) http.Handler {
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
 	})
+
+	// ─── Swagger Documentation ─────────────────────────
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	// ─── Auth handlers ───────────────────────────────
 	authHandler := NewAuthHandler(identity, logger)
@@ -143,7 +147,7 @@ func NewRouter(cfg RouterConfig) http.Handler {
 				"response_types_supported":              []string{"code"},
 				"subject_types_supported":               []string{"public"},
 				"claims_supported":                      []string{"sub", "iss", "aud", "exp", "iat", "auth_time", "nonce", "email", "email_verified", "name", "preferred_username", "picture", "updated_at"},
-				"response_modes_supported":             []string{"query", "fragment"},
+				"response_modes_supported":              []string{"query", "fragment"},
 				"scopes_supported":                      []string{"openid", "profile", "email", "address", "phone", "offline_access"},
 				"token_endpoint_auth_methods_supported": []string{"client_secret_basic", "client_secret_post", "none"},
 				"grant_types_supported":                 []string{"authorization_code", "refresh_token"},
@@ -199,4 +203,3 @@ func clientInfoMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-

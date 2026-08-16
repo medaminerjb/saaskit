@@ -33,6 +33,16 @@ func (h *UserHandler) Routes(r chi.Router) {
 }
 
 // GetMe handles GET /api/v1/users/me
+// @Summary Get current user
+// @Description Get the authenticated user's profile
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} map[string]interface{} "User profile"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "User not found"
+// @Router /users/me [get]
 func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	claims := GetClaims(r.Context())
 	if claims == nil {
@@ -61,6 +71,18 @@ type updateMeRequest struct {
 }
 
 // UpdateMe handles PATCH /api/v1/users/me
+// @Summary Update current user
+// @Description Update the authenticated user's profile
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body updateMeRequest true "Profile updates"
+// @Success 200 {object} map[string]interface{} "Updated user profile"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Update failed"
+// @Router /users/me [patch]
 func (h *UserHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	claims := GetClaims(r.Context())
 	if claims == nil {
@@ -93,6 +115,15 @@ func (h *UserHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListSessions handles GET /api/v1/users/me/sessions
+// @Summary List user sessions
+// @Description Get all active sessions for the authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} map[string]interface{} "List of sessions"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Router /users/me/sessions [get]
 func (h *UserHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 	claims := GetClaims(r.Context())
 	if claims == nil {
@@ -105,6 +136,18 @@ func (h *UserHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 }
 
 // RevokeSession handles DELETE /api/v1/users/me/sessions/{sessionID}
+// @Summary Revoke a session
+// @Description Revoke a specific session for the authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param sessionID path string true "Session ID"
+// @Success 200 {object} map[string]string "Session revoked"
+// @Failure 400 {object} map[string]string "Invalid session ID"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Revoke failed"
+// @Router /users/me/sessions/{sessionID} [delete]
 func (h *UserHandler) RevokeSession(w http.ResponseWriter, r *http.Request) {
 	claims := GetClaims(r.Context())
 	if claims == nil {
@@ -134,6 +177,16 @@ func (h *UserHandler) RevokeSession(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetMetadata handles GET /api/v1/users/me/metadata
+// @Summary Get user metadata
+// @Description Get public metadata for the authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} map[string]interface{} "User metadata"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "User not found"
+// @Router /users/me/metadata [get]
 func (h *UserHandler) GetMetadata(w http.ResponseWriter, r *http.Request) {
 	claims := GetClaims(r.Context())
 	if claims == nil {
@@ -164,6 +217,18 @@ type updateMetadataRequest struct {
 }
 
 // UpdateMetadata handles PATCH /api/v1/users/me/metadata
+// @Summary Update user metadata
+// @Description Update metadata for the authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body updateMetadataRequest true "Metadata updates"
+// @Success 200 {object} map[string]interface{} "Updated metadata"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Update failed"
+// @Router /users/me/metadata [patch]
 func (h *UserHandler) UpdateMetadata(w http.ResponseWriter, r *http.Request) {
 	claims := GetClaims(r.Context())
 	if claims == nil {
