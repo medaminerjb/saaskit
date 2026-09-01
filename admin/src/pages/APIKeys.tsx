@@ -10,13 +10,18 @@ interface APIKey {
   created_at: string;
 }
 
-const INITIAL_KEYS: APIKey[] = [
-  { id: 'key_1', name: 'Development Key', key_prefix: 'sk_test_51O', scopes: ['tenant.read', 'users.read'], type: 'test', status: 'active', created_at: '2026-03-01T10:00:00Z' },
-  { id: 'key_2', name: 'Production Server Key', key_prefix: 'sk_live_89A', scopes: ['tenant.read', 'tenant.write', 'users.read'], type: 'live', status: 'active', created_at: '2026-04-12T14:30:00Z' }
-];
-
 export default function APIKeys() {
-  const [apiKeys, setApiKeys] = useState<APIKey[]>(INITIAL_KEYS);
+  const [apiKeys, setApiKeys] = useState<APIKey[]>(() => {
+    const saved = localStorage.getItem('saaskit_api_keys');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // fallback
+      }
+    }
+    return [];
+  });
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newName, setNewName] = useState('');
@@ -24,7 +29,11 @@ export default function APIKeys() {
   const [newScopes, setNewScopes] = useState('tenant.read,tenant.write');
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 400);
+    localStorage.setItem('saaskit_api_keys', JSON.stringify(apiKeys));
+  }, [apiKeys]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 300);
     return () => clearTimeout(timer);
   }, []);
 

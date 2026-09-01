@@ -1,16 +1,44 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { saaskitClient } from '../services/saaskit';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
-  // Live counts matched with the other pages' initial seed data
-  const totalUsers = 5;
-  const totalTenants = 3;
-  const totalApiKeys = 2;
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [totalTenants, setTotalTenants] = useState<number>(0);
+  const [totalApiKeys, setTotalApiKeys] = useState<number>(0);
+  const { accessToken } = useAuth();
 
-  const recentActivities = [
-    { id: 'act_1', action: 'user.created', user: 'admin@saaskit.dev', time: '10 mins ago', status: 'Success' },
-    { id: 'act_2', action: 'tenant.created', user: 'admin@saaskit.dev', time: '45 mins ago', status: 'Success' },
-    { id: 'act_3', action: 'api_key.created', user: 'developer@saaskit.dev', time: '2 hours ago', status: 'Success' }
-  ];
+  useEffect(() => {
+    async function loadStats() {
+      if (accessToken) {
+        try {
+          const users = await saaskitClient.users.listAllUsers(accessToken);
+          if (users && Array.isArray(users)) setTotalUsers(users.length);
+        } catch {
+          setTotalUsers(0);
+        }
+        try {
+          const tenants = await saaskitClient.tenants.listAllTenants(accessToken);
+          if (tenants && Array.isArray(tenants)) setTotalTenants(tenants.length);
+        } catch {
+          setTotalTenants(0);
+        }
+      }
+      try {
+        const savedKeys = localStorage.getItem('saaskit_api_keys');
+        if (savedKeys) {
+          const parsed = JSON.parse(savedKeys);
+          if (Array.isArray(parsed)) setTotalApiKeys(parsed.length);
+        }
+      } catch {
+        setTotalApiKeys(0);
+      }
+    }
+    loadStats();
+  }, [accessToken]);
+
+  const recentActivities: Array<{ id: string; action: string; user: string; time: string; status: string }> = [];
 
   return (
     <div className="animate-fade-in space-y-8">
@@ -174,23 +202,29 @@ export default function Dashboard() {
               </Link>
             </div>
             <div className="divide-y divide-gray-50">
-              {recentActivities.map((act) => (
-                <div key={act.id} className="p-4 px-6 flex items-center justify-between hover:bg-gray-50/40 transition-colors duration-150">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary-500 animate-pulse"></div>
-                    <div>
-                      <div className="text-sm font-semibold text-gray-800">{act.action}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">by {act.user}</div>
+              {recentActivities.length === 0 ? (
+                <div className="p-8 text-center text-sm text-gray-400">
+                  <p className="font-medium">No recent activities recorded</p>
+                </div>
+              ) : (
+                recentActivities.map((act) => (
+                  <div key={act.id} className="p-4 px-6 flex items-center justify-between hover:bg-gray-50/40 transition-colors duration-150">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary-500 animate-pulse"></div>
+                      <div>
+                        <div className="text-sm font-semibold text-gray-800">{act.action}</div>
+                        <div className="text-xs text-gray-400 mt-0.5">by {act.user}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-xs text-gray-400 font-medium">{act.time}</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
+                        {act.status}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-xs text-gray-400 font-medium">{act.time}</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
-                      {act.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

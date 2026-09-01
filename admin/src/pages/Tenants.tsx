@@ -44,10 +44,15 @@ export default function Tenants() {
   const fetchTenants = async () => {
     try {
       setLoading(true);
-      const fetchedTenants = await saaskitClient.tenants.listAllTenants(accessToken);
-      setTenants(fetchedTenants);
+      if (accessToken) {
+        const fetchedTenants = await saaskitClient.tenants.listAllTenants(accessToken);
+        setTenants(fetchedTenants || []);
+      } else {
+        setTenants([]);
+      }
     } catch (error) {
       console.error('Failed to fetch tenants:', error);
+      setTenants([]);
     } finally {
       setLoading(false);
     }
