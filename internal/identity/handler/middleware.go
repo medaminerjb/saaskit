@@ -139,3 +139,19 @@ func (rl *RateLimiter) Limit(next http.Handler) http.Handler {
 func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return platformmiddleware.SecurityHeaders()(next)
 }
+
+// RequireSuperAdmin middleware ensures the authenticated user possesses super admin privileges.
+func RequireSuperAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims := GetClaims(r.Context())
+		if claims == nil {
+			writeError(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		if claims.Role != "super_admin" && claims.Role != "admin" {
+			writeError(w, http.StatusForbidden, "forbidden: super admin access required")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

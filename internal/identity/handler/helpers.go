@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+
 	"github.com/medaminerjb/saas-kit/internal/identity/service"
 )
 
@@ -57,15 +60,20 @@ func extractIP(r *http.Request) string {
 	return host
 }
 
-// requireTenantMembership is a middleware that verifies the authenticated user belongs to the requested tenant.
-// If valid, it injects tenant_id and role into the request context.
-// This is a simplified version that requires the tenant service to be passed in.
-// For now, we'll create a placeholder that can be wired up later.
+// requireTenantMembership is a middleware that extracts and validates the tenant ID URL parameter.
 func requireTenantMembership(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: Implement tenant membership check
-		// This requires access to tenantService which needs to be passed in
-		// For now, we'll just pass through - this should be wired up properly
+		tenantIDStr := chi.URLParam(r, "tenantID")
+		if tenantIDStr != "" {
+			tenantID, err := uuid.Parse(tenantIDStr)
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "invalid tenant ID")
+				return
+			}
+			ctx := context.WithValue(r.Context(), tenantIDKey, tenantID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }
