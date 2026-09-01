@@ -89,6 +89,12 @@ func NewRouter(cfg RouterConfig) http.Handler {
 				tenantHandler.Routes(r)
 			}
 		})
+
+		// Super Admin routes (requires JWT + Super Admin role)
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.Handler)
+			r.Use(RequireSuperAdmin)
+		})
 	})
 
 	if cfg.APIKeyService != nil {

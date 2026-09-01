@@ -21,6 +21,7 @@ type JWTClaims struct {
 	SessionID   string   `json:"sid,omitempty"`
 	TenantID    *string  `json:"tenant,omitempty"`
 	TenantRole  *string  `json:"tenant_role,omitempty"`
+	Role        string   `json:"role,omitempty"`
 	Permissions []string `json:"permissions,omitempty"`
 	MFAVerified bool     `json:"mfa_verified,omitempty"`
 	Scope       string   `json:"scope,omitempty"`
@@ -66,6 +67,18 @@ func (s *TokenService) GenerateAccessToken(_ context.Context, user *domain.User,
 	now := time.Now()
 	jti := uuid.New().String()
 
+	role := ""
+	if user.MetadataPrivate != nil {
+		if r, ok := user.MetadataPrivate["role"].(string); ok {
+			role = r
+		}
+	}
+	if role == "" && user.MetadataPublic != nil {
+		if r, ok := user.MetadataPublic["role"].(string); ok {
+			role = r
+		}
+	}
+
 	claims := JWTClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    s.issuer,
@@ -77,6 +90,7 @@ func (s *TokenService) GenerateAccessToken(_ context.Context, user *domain.User,
 		},
 		SessionID:   sessionID.String(),
 		TenantRole:  tenantRole,
+		Role:        role,
 		Permissions: permissions,
 		MFAVerified: mfaVerified,
 		Scope:       "openid profile email",

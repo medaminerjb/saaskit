@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/ui/logo';
 
@@ -7,7 +8,14 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,7 +24,8 @@ export default function Login() {
 
     try {
       await login({ email, password });
-    } catch (err) {
+      navigate('/', { replace: true });
+    } catch {
       setError('Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
@@ -30,8 +39,8 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-50  ">
             <Logo />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">SaaSKit Admin</h2>
-          <p className="mt-2 text-gray-600">Sign in to manage your SaaSKit instance</p>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">SaaSKit Super Admin</h2>
+          <p className="mt-2 text-gray-600">Sign in with Super Admin credentials to access panel</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">

@@ -1,14 +1,18 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/urfave/cli/v2"
+	"golang.org/x/term"
 
 	idcrypto "github.com/medaminerjb/saas-kit/internal/identity/crypto"
 	"github.com/medaminerjb/saas-kit/internal/identity/domain"
@@ -25,6 +29,33 @@ func main() {
 		Name:  "saaskit",
 		Usage: "SaaSKit CLI - Manage users, tenants, and API keys",
 		Commands: []*cli.Command{
+			{
+				Name:  "superadmin",
+				Usage: "Super admin management commands",
+				Subcommands: []*cli.Command{
+					{
+						Name:   "create",
+						Usage:  "Create or promote a super admin user securely",
+						Action: createSuperAdmin,
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:     "email",
+								Usage:    "Super admin email",
+								Required: true,
+							},
+							&cli.StringFlag{
+								Name:  "password",
+								Usage: "Super admin password (leave empty to prompt securely)",
+							},
+							&cli.StringFlag{
+								Name:  "name",
+								Usage: "Super admin display name",
+								Value: "Super Admin",
+							},
+						},
+					},
+				},
+			},
 			{
 				Name:  "user",
 				Usage: "User management commands",
@@ -448,4 +479,106 @@ func revokeAPIKey(c *cli.Context) error {
 	// For CLI, we'll need to get tenant ID from context or ask user
 	// For now, return an error indicating this limitation
 	return fmt.Errorf("revoke requires tenant ID and revoked by user ID - use API instead")
+}
+
+func createSuperAdmin(c *cli.Context) error {
+	ctx := context.Background()
+	_, userRepo, _, _, err := setupServices(ctx, c)
+	if err != nil {
+		return err
+	}
+
+	email := c.String("email")
+	if err := service.ValidateEmail(email); err != nil {
+		return fmt.Errorf("invalid email address: %w", err)
+	}
+
+	password := c.String("password")
+	if password == "" {
+		fmt.Print("Enter super admin password: ")
+		bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+		fmt.Println()
+		if err != nil {
+			// Fallback if not a terminal
+			scanner := bufio.NewScanner(os.Stdin)
+			if scanner.Scan() {
+				password = strings.TrimSpace(scanner.Text())
+			}
+		} else {
+			password = strings.TrimSpace(string(bytePassword))
+		}
+
+		if len(password) > 0 {
+			fmt.Print("Confirm super admin password: ")
+			confirmPassword, err := term.ReadPassword(int(syscall.Stdin))
+			fmt.Println()
+			if err == nil && password != strings.TrimSpace(string(confirmPassword)) {
+				return fmt.Errorf("passwords do not match")
+			}
+		}
+	}
+
+	if err := service.ValidatePassword(password); err != nil {
+		return fmt.Errorf("invalid password: %w", err)
+	}
+
+	hasher := idcrypto.NewHasher(idcrypto.Argon2Params{
+		Memory:      64 * 1024,
+		Iterations:  3,
+		Parallelism: 2,
+		SaltLength:  16,
+		KeyLength:   32,
+	})
+
+	passwordHash, err := hasher.Hash(password)
+	if err != nil {
+		return fmt.Errorf("hashing password: %w", err)
+	}
+
+	existingUser, _ := userRepo.GetByEmail(ctx, email, nil)
+	if existingUser != nil {
+		existingUser.PasswordHash = &passwordHash
+		existingUser.Status = domain.UserStatusActive
+		existingUser.EmailVerified = true
+		if existingUser.MetadataPrivate == nil {
+			existingUser.MetadataPrivate = make(map[string]interface{})
+		}
+		existingUser.MetadataPrivate["role"] = "super_admin"
+		existingUser.MetadataPrivate["is_super_admin"] = true
+
+		if err := userRepo.Update(ctx, existingUser); err != nil {
+			return fmt.Errorf("updating super admin user: %w", err)
+		}
+		fmt.Printf("User %s promoted to Super Admin successfully.\n", email)
+		return nil
+	}
+
+	metaPrivate := map[string]interface{}{
+		"role":           "super_admin",
+		"is_super_admin": true,
+	}
+
+	name := c.String("name")
+	newUser := &domain.User{
+		ID:              uuid.New(),
+		Email:           email,
+		Name:            name,
+		PasswordHash:    &passwordHash,
+		Status:          domain.UserStatusActive,
+		EmailVerified:   true,
+		MetadataPrivate: metaPrivate,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	if err := userRepo.Create(ctx, newUser); err != nil {
+		return fmt.Errorf("creating super admin user: %w", err)
+	}
+
+	fmt.Printf("Super Admin user created successfully:\n")
+	fmt.Printf("  ID: %s\n", newUser.ID)
+	fmt.Printf("  Email: %s\n", newUser.Email)
+	fmt.Printf("  Role: super_admin\n")
+
+	return nil
 }

@@ -9,16 +9,8 @@ interface AuditEvent {
   data: Record<string, unknown>;
 }
 
-const INITIAL_EVENTS: AuditEvent[] = [
-  { id: 'evt_1', event_type: 'user.created', actor_id: 'usr_1', tenant_id: 'tn_1', timestamp: '2026-05-01T10:00:00Z', data: { email: 'jane.doe@example.com', name: 'Jane Doe', role: 'member' } },
-  { id: 'evt_2', event_type: 'tenant.created', actor_id: 'usr_1', tenant_id: 'tn_2', timestamp: '2026-05-02T11:15:00Z', data: { name: 'Stark Industries', slug: 'stark' } },
-  { id: 'evt_3', event_type: 'api_key.created', actor_id: 'usr_4', tenant_id: 'tn_1', timestamp: '2026-05-03T09:45:00Z', data: { name: 'Production Key', type: 'live' } },
-  { id: 'evt_4', event_type: 'user.updated', actor_id: 'usr_2', tenant_id: 'tn_1', timestamp: '2026-05-03T16:20:00Z', data: { first_name: 'Jane', last_name: 'Doe', field_changed: 'name' } },
-  { id: 'evt_5', event_type: 'api_key.revoked', actor_id: 'usr_1', timestamp: '2026-05-04T14:10:00Z', data: { id: 'key_7y38', name: 'Deprecated Key', reason: 'expired' } }
-];
-
 export default function Audit() {
-  const [events, setEvents] = useState<AuditEvent[]>(INITIAL_EVENTS);
+  const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('');
   const [filterTenant, setFilterTenant] = useState('');

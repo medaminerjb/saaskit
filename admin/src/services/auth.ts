@@ -1,13 +1,4 @@
-import SaaSKitClient from '@saaskit/js';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-
-export const saaskitClient = new SaaSKitClient({
-  baseURL: API_BASE_URL,
-  timeout: 30000,
-  maxRetries: 3,
-  retryDelay: 1000,
-});
+import { saaskitClient } from './saaskit';
 
 export interface LoginCredentials {
   email: string;
@@ -37,3 +28,4 @@ export const authService = {
     return await saaskitClient.auth.refresh({ refresh_token: refreshToken });
   },
 };
+

@@ -33,10 +33,15 @@ export default function Users() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const fetchedUsers = await saaskitClient.users.listAllUsers(accessToken);
-      setUsers(fetchedUsers);
+      if (accessToken) {
+        const fetchedUsers = await saaskitClient.users.listAllUsers(accessToken);
+        setUsers(fetchedUsers || []);
+      } else {
+        setUsers([]);
+      }
     } catch (error) {
       console.error('Failed to fetch users:', error);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
