@@ -8,15 +8,18 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 
 	_ "github.com/medaminerjb/saas-kit/docs" // swagger docs
 	"github.com/medaminerjb/saas-kit/internal/audit"
 	"github.com/medaminerjb/saas-kit/internal/config"
 	idcrypto "github.com/medaminerjb/saas-kit/internal/identity/crypto"
+	"github.com/medaminerjb/saas-kit/internal/identity/domain"
 	"github.com/medaminerjb/saas-kit/internal/identity/handler"
 	"github.com/medaminerjb/saas-kit/internal/identity/repository"
 	"github.com/medaminerjb/saas-kit/internal/identity/service"
@@ -135,6 +138,11 @@ func run() error {
 	userRepo := repository.NewUserRepo(pool)
 	sessionRepo := repository.NewSessionRepo(pool)
 	tokenRepo := repository.NewTokenRepo(pool)
+
+	// ─── Super Admin Initialization ──────────────────
+	if err := ensureSuperAdminFromConfig(ctx, userRepo, hasher, logger); err != nil {
+		logger.Error("failed to ensure super admin user", slog.Any("error", err))
+	}
 
 	// ─── Services ─────────────────────────────────────
 	tokenService := service.NewTokenService(service.TokenServiceConfig{
@@ -297,5 +305,84 @@ func runMigrations(databaseURL string) error {
 	// For production, use `make migrate-up` or the goose CLI.
 	// This is a placeholder — will wire goose.Up() when dependency is added.
 	_ = databaseURL
+	return nil
+}
+
+func ensureSuperAdminFromConfig(ctx context.Context, userRepo repository.UserRepository, hasher *idcrypto.Hasher, logger *slog.Logger) error {
+	email := os.Getenv("SAASKIT_SUPERADMIN_EMAIL")
+	if email == "" {
+		return nil
+	}
+
+	if err := service.ValidateEmail(email); err != nil {
+		return fmt.Errorf("invalid SAASKIT_SUPERADMIN_EMAIL: %w", err)
+	}
+
+	var password string
+	passwordFile := os.Getenv("SAASKIT_SUPERADMIN_PASSWORD_FILE")
+	if passwordFile != "" {
+		data, err := os.ReadFile(passwordFile)
+		if err != nil {
+			return fmt.Errorf("reading SAASKIT_SUPERADMIN_PASSWORD_FILE: %w", err)
+		}
+		password = strings.TrimSpace(string(data))
+	} else {
+		password = os.Getenv("SAASKIT_SUPERADMIN_PASSWORD")
+	}
+
+	if password == "" {
+		logger.Warn("SAASKIT_SUPERADMIN_EMAIL is set but no SAASKIT_SUPERADMIN_PASSWORD or SAASKIT_SUPERADMIN_PASSWORD_FILE provided")
+		return nil
+	}
+
+	if err := service.ValidatePassword(password); err != nil {
+		return fmt.Errorf("invalid SAASKIT_SUPERADMIN_PASSWORD: %w", err)
+	}
+
+	passwordHash, err := hasher.Hash(password)
+	if err != nil {
+		return fmt.Errorf("hashing super admin password: %w", err)
+	}
+
+	existingUser, _ := userRepo.GetByEmail(ctx, email, nil)
+	if existingUser != nil {
+		existingUser.PasswordHash = &passwordHash
+		existingUser.Status = domain.UserStatusActive
+		existingUser.EmailVerified = true
+		if existingUser.MetadataPrivate == nil {
+			existingUser.MetadataPrivate = make(map[string]interface{})
+		}
+		existingUser.MetadataPrivate["role"] = "super_admin"
+		existingUser.MetadataPrivate["is_super_admin"] = true
+
+		if err := userRepo.Update(ctx, existingUser); err != nil {
+			return fmt.Errorf("updating super admin user: %w", err)
+		}
+		logger.Info("super admin user updated successfully", slog.String("email", email))
+		return nil
+	}
+
+	metaPrivate := map[string]interface{}{
+		"role":           "super_admin",
+		"is_super_admin": true,
+	}
+
+	newUser := &domain.User{
+		ID:              uuid.New(),
+		Email:           email,
+		Name:            "Super Admin",
+		PasswordHash:    &passwordHash,
+		Status:          domain.UserStatusActive,
+		EmailVerified:   true,
+		MetadataPrivate: metaPrivate,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	if err := userRepo.Create(ctx, newUser); err != nil {
+		return fmt.Errorf("creating super admin user: %w", err)
+	}
+
+	logger.Info("super admin user created successfully", slog.String("email", email))
 	return nil
 }

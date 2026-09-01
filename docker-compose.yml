@@ -25,6 +25,10 @@ services:
       SAASKIT_JWT_ISSUER: http://localhost:8080
       SAASKIT_LOG_LEVEL: debug
       SAASKIT_LOG_FORMAT: text
+      # Super Admin auto-provisioning configuration (Security First)
+      SAASKIT_SUPERADMIN_EMAIL: admin@saaskit.dev
+      SAASKIT_SUPERADMIN_PASSWORD: DevSuperAdminPassword123!
+      # SAASKIT_SUPERADMIN_PASSWORD_FILE: /run/secrets/superadmin_password # Preferred for production Docker Secrets
     depends_on:
       postgres:
         condition: service_healthy
