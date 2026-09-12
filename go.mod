@@ -18,7 +18,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.5
 	github.com/zitadel/oidc/v3 v3.49.2
 	golang.org/x/crypto v0.55.0
-	golang.org/x/oauth2 v0.36.0
+	golang.org/x/oauth2 v0.37.0
 	golang.org/x/term v0.45.0
 	golang.org/x/text v0.41.0
 )
