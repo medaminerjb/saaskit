@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@saaskit/js": "file:../sdk/js",
-    "axios": "^1.19.0",
+    "axios": "^1.20.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"
